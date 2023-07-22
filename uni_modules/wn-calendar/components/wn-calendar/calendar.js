@@ -14,7 +14,6 @@ function getDays(year, month, data, isLess) {
 		const d = new Date(year, month - 1)
 		y = d.getFullYear()
 		m = d.getMonth()
-		console.log('需要补0',d,m);
 	} else {
 		y = today.getFullYear()
 		m = today.getMonth()

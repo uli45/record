@@ -41,9 +41,21 @@
                 ]
             },
             /* ios打包配置 */
-            "ios" : {},
+            "ios" : {
+                "dSYMs" : false
+            },
             /* SDK配置 */
-            "sdkConfigs" : {}
+            "sdkConfigs" : {
+                "ad" : {
+                    "gdt" : {},
+                    "ks" : {},
+                    "ks-content" : {},
+                    "sigmob" : {},
+                    "hw" : {},
+                    "bd" : {},
+                    "gm" : {}
+                }
+            }
         }
     },
     /* 快应用特有相关 */
@@ -53,9 +65,12 @@
         "appid" : "wx4251bbcadd959b11",
         "setting" : {
             "urlCheck" : false,
-            "es6" : false
+            "es6" : true,
+            "postcss" : true,
+            "minified" : true
         },
-        "usingComponents" : true
+        "usingComponents" : true,
+        "lazyCodeLoading" : "requiredComponents"
     },
     "mp-alipay" : {
         "usingComponents" : true

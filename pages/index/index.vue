@@ -1,9 +1,9 @@
 <template>
 	<view>
-		<u-notice-bar :text="text" color='#aeb5c3' bg-color='#e5efff' ></u-notice-bar>
+		<u-notice-bar :text="text" color='#aeb5c3' bg-color='#e5efff'></u-notice-bar>
 		<u-notice-bar :text="contentList" direction='column'></u-notice-bar>
 		<wn-calendar ref="calendar" :data="date" :isBorder="true" :isLess="false"
-			:colors="[  '#8f939c', '#18bc37', '#e43d33']" :isEn="false"></wn-calendar>
+			:colors="[  '#8f939c', '#18bc37', '#e43d33']" :isEn="false" @choose="choose"></wn-calendar>
 		<view class="recBox">
 			<view class="rec" @click='open'>
 				打卡
@@ -46,12 +46,15 @@
 
 <script>
 	import {
+		data
+	} from '../../uni_modules/uview-ui/libs/mixin/mixin.js'
+	import {
 		jsData
 	} from './jeluyulu.js'
 	export default {
 		data() {
 			return {
-				text:'您在本小程序产生的所有打卡记录均存储于本地，即您的手机上，除了您之外没有任何人能看到您的打卡记录。 需要注意的是，请您保持使用，如果长时间不使用本小程序，您的所有打卡记录数据有可能会被微信清除，届时将无法找回！！！',
+				text: '您在本小程序产生的所有打卡记录均存储于本地，即您的手机上，除了您之外没有任何人能看到您的打卡记录。 需要注意的是，请您保持使用，如果长时间不使用本小程序，您的所有打卡记录数据有可能会被微信清除，届时将无法找回！！！',
 				title: '确认放弃打卡吗？',
 				content: '',
 				showModal: false,
@@ -113,7 +116,8 @@
 			}
 		},
 		onLoad() {
-
+			const length = Math.round(Math.random() * jsData.length)
+			uni.$u.mpShare.title = jsData[length];
 
 		},
 		onReady() {
@@ -124,10 +128,36 @@
 
 		},
 		methods: {
+			choose(data) {
+				console.log('选中的', data);
+				let timestamp = new Date(data.date).getTime()
+				let date = uni.$u.date(timestamp, 'yyyy年mm月dd日')
+				if (data.data) {
+					return uni.$u.toast(`${date}您已打卡～`)
+				} else if (this.getTodyLastTime() < timestamp) {
+					console.log(this.getTodyLastTime(), timestamp);
+					return
+				} else {
+					this.show = true
+					this.model = {
+						date: date,
+						type: '',
+						text: ''
+					}
+
+				}
+
+			},
 			open() {
+
 				if (this.date.some(e => e.date === this.dateFormatReal(this.model.date))) {
 					uni.$u.toast('今日已打卡哦')
 				} else {
+					this.model = {
+						...this.model,
+						type: '',
+						text: ''
+					}
 					this.show = true
 				}
 			},
@@ -142,6 +172,8 @@
 			confirm() {
 				this.showModal = false
 				this.show = false
+				this.model.date = uni.$u.date(new Date(), 'yyyy年mm月dd日')
+				this.$refs.calendar.refresh()
 			},
 			cancel() {
 				this.showModal = false
@@ -150,34 +182,35 @@
 			submit() {
 				const length = Math.round(Math.random() * jsData.length)
 				this.$refs.uForm.validate().then((res) => {
-					uni.$u.toast('校验通过')
 					const data = {
 						...this.model,
 						date: this.dateFormatReal(this.model.date),
 						id: new Date().getTime()
 					}
 					this.date.push(data)
+					//去重
 					let map = new Map();
 					for (let item of this.date) {
 						map.set(item.date, item);
 					}
 					this.date = [...map.values()];
+					//本地存储
 					uni.setStorageSync('date', this.date)
 					if (data.type === 2) {
 						uni.setStorageSync('days', 0)
 					} else {
-						uni.setStorageSync('days', this.days + 1)
+						uni.setStorageSync('days', Number(uni.getStorageSync('days')) + 1)
 
 					}
 					this.$refs.calendar.refresh()
-					if (uni.getStorageSync('days') === 0) {
+					if (Number(uni.getStorageSync('days')) === 0) {
 						uni.$u.toast('兄弟请记住：' + jsData[length])
 					} else {
 						uni.$u.toast('太棒了兄弟，你又坚持了一天！')
 
 					}
 					this.show = false
-				}).catch(errors => {
+				}).catch(() => {
 					console.log(this.dateFormatReal('2023年07月20日'));
 				})
 			},
@@ -193,6 +226,14 @@
 				let m = dateObj.getMonth() + 1
 				let d = dateObj.getDate()
 				return `${y}/${m}/${d}`
+
+			},
+			getTodyLastTime() {
+				let todayYear = (new Date()).getFullYear();
+				let todayMonth = (new Date()).getMonth();
+				let todayDay = (new Date()).getDate();
+				let todayTime = (new Date(todayYear, todayMonth, todayDay, '23', '59', '59')).getTime(); //毫秒
+				return todayTime
 
 			}
 		}
